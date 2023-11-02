@@ -93,6 +93,7 @@ public class ProductController {
 
 		Map<String, Object> params = Map.of("page", page, "limit", limit, "productId", productId);
 
+		
 		int totalCount = reviewService.findProductTotalReviewCount(productId);
 
 		int totalPages = (int) Math.ceil((double) totalCount / limit);
