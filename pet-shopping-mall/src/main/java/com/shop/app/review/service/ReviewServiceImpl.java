@@ -17,6 +17,7 @@ import com.shop.app.pet.service.PetService;
 import com.shop.app.product.dto.ProductInfoDto;
 import com.shop.app.product.entity.Product;
 import com.shop.app.product.repository.ProductRepository;
+import com.shop.app.review.dto.ProductDetailPageDto;
 import com.shop.app.review.dto.ProductReviewAvgDto;
 import com.shop.app.review.dto.ReviewCreateDto;
 import com.shop.app.review.dto.ReviewDetailDto;
@@ -253,7 +254,31 @@ public class ReviewServiceImpl implements ReviewService {
 	public ReviewDetails findProductImageAttachmentsByReviewId2(int reviewId2, int orderId) {
 		return reviewRepository.findProductImageAttachmentsByReviewId2(reviewId2, orderId);
 	}
-
+	
+	@Override
+	public ProductDetailPageDto findProductReviewAllAndCount(Map<String, Object> params, int productId) {
+    	
+    	int limit = (int) params.get("limit");
+        int page = (int) params.get("page");
+        int offset = (page - 1) * limit;
+        RowBounds rowBounds = new RowBounds(offset, limit);
+        
+    	List<ProductDetailPageDto> reviewInfoList = reviewRepository.findProductReviewAllAndCount(rowBounds, productId);
+        
+    	ProductDetailPageDto reviewPageInfo = new ProductDetailPageDto();
+    	reviewPageInfo.setProductId(productId);
+        reviewPageInfo.setReviews(reviewInfoList);
+        
+        // 첫 번째 totalCount 값을 가져와 설정
+        if (!reviewInfoList.isEmpty()) {
+            long totalCount = reviewInfoList.get(0).getTotalCount();
+            reviewPageInfo.setTotalCount(totalCount);
+        } else {
+            reviewPageInfo.setTotalCount(0);
+        }
+    	
+    	return reviewPageInfo;
+    }
 
 }
 

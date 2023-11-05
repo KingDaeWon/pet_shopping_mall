@@ -43,26 +43,34 @@
             </c:if>
             </div>
             <div class="product-info">
-               <div id="product-title">${product.productName}</div>
+              <!-- 상품의 이름을 표시 -->
+			    <c:if test="${not empty reviewPageInfo.reviews}">
+			        <div id="product-title">${reviewPageInfo.reviews[0].productName}</div>
+			    </c:if>
                <div class="product-assist">
-                  <div id="price-info">
-                     <fmt:formatNumber value="${product.productPrice}" pattern="#,###" />
-                     원
-                  </div>
+                <!-- 상품의 가격을 표시 -->
+			    <div id="price-info">
+			        <fmt:formatNumber value="${reviewPageInfo.reviews[0].productPrice}" pattern="#,###" />
+			        원
+			    </div>
                   <div class="product-assist">
                      <img
                         src="${pageContext.request.contextPath}/resources/images/상품/star.png"
                         alt="별점" />
-                     <c:if test="${productReviewStarAvg.reviewStarRate == null}">
-                        <span>0.0</span>
-                        <span>&nbsp;|&nbsp;</span>
-                     </c:if>
-                     <c:if test="${productReviewStarAvg.reviewStarRate != null}">
-                        <span>${productReviewStarAvg.reviewStarRate}</span>
-                        <span>&nbsp;|&nbsp;</span>
-                     </c:if>
+					<c:if test="${reviewPageInfo != null}">
+					    <c:choose>
+					        <c:when test="${empty reviewPageInfo.reviews}">
+					            <span>0.0</span>
+					        </c:when>
+					        <c:otherwise>
+					            <c:set var="firstReview" value="${reviewPageInfo.reviews[0]}"/>
+					            <span>${firstReview.avgStarRate}</span>
+					        </c:otherwise>
+					    </c:choose>
+					    <span>&nbsp;|&nbsp;</span>
+					</c:if>
                      <span><a href="#product-review-box">후기
-                           ${reviewTotalCount}건</a></span>
+                           ${reviewPageInfo.totalCount}건</a></span>
                   </div>
                </div>
                <hr class="hr-line" />
@@ -88,7 +96,7 @@
                   배송비 3,000원(30,000원이상 구매시 무료배송) <br /> 오후 1시 이전 주문 시 오늘 출발 <br />
                </div>
                <hr class="hr-line" />
-               <c:if test="${fn:length(productDetails) eq 1}">
+               <c:if test="${fn:length(reviewPageInfo.reviews) eq 1}">
                   <div class="purchase-cnt">
                      <div class="quantity-container">
                         <span>수량 </span>
@@ -100,13 +108,13 @@
                   <div class="additional-price-container"
                      id="additional-price-container" style="display: none;">
                      <div class="additional-price"
-                        id="${productDetails[0].productDetailId}">${productDetails[0].additionalPrice}</div>
+                        id="${reviewPageInfo.reviews[0].productDetailId}">${reviewPageInfo.reviews[0].additionalPrice}</div>
                   </div>
                </c:if>
-               <c:if test="${fn:length(productDetails) gt 1}">
+               <c:if test="${fn:length(reviewPageInfo.reviews) gt 1}">
                   <div>
                      <select name="product-option">
-                        <c:forEach items="${productDetails}" var="productDetail"
+                        <c:forEach items="${reviewPageInfo.reviews}" var="productDetail"
                            varStatus="vs">
                            <c:if test="${empty productDetail.optionName}">
                               <option class="options"
@@ -123,7 +131,7 @@
                   <!-- 옵션추가금 -->
                   <div class="additional-price-container"
                      id="additional-price-container" style="display: none;">
-                     <c:forEach items="${productDetails}" var="productDetail"
+                     <c:forEach items="${reviewPageInfo.reviews}" var="productDetail"
                         varStatus="vs">
                         <div class="additional-price"
                            id="${productDetail.productDetailId}">${productDetail.additionalPrice}</div>
@@ -189,28 +197,33 @@
    </div>
    <div class="review-div">
       <ul class="review-product-utility">
-         <c:if test="${empty reviews}"> 
+         <c:if test="${empty reviewPageInfo}"> 
            작성된 리뷰가 없습니다. 
            </c:if>
-         <c:if test="${not empty reviews}">
+         <c:if test="${not empty reviewPageInfo}">
          <div class="review-avg-star">
-            <c:if test="${productReviewStarAvg.reviewStarRate == null}">
-               <div>0.0</div>
-               <div>☆☆☆☆☆</div> 
-             </c:if>
-            <c:if test="${productReviewStarAvg.reviewStarRate != null}">
-                <div>${productReviewStarAvg.reviewStarRate}</div>
-                <div class="review-avg-star2">
-                 <c:choose>
-                     <c:when test="${productReviewStarAvg.reviewStarRate >= 4.5}">★★★★★</c:when>
-                     <c:when test="${productReviewStarAvg.reviewStarRate >= 3.5}">★★★★☆</c:when>
-                     <c:when test="${productReviewStarAvg.reviewStarRate >= 2.5}">★★★☆☆</c:when>
-                     <c:when test="${productReviewStarAvg.reviewStarRate >= 1.5}">★★☆☆☆</c:when>
-                     <c:when test="${productReviewStarAvg.reviewStarRate >= 0.1}">★☆☆☆☆</c:when>
-                     <c:otherwise>☆☆☆☆☆</c:otherwise>
-                 </c:choose>
-                </div>
-            </c:if>
+			<c:if test="${reviewPageInfo != null}">
+			    <c:choose>
+			        <c:when test="${empty reviewPageInfo.reviews}">
+			            <div>0.0</div>
+			            <div>☆☆☆☆☆</div>
+			        </c:when>
+			        <c:otherwise>
+			            <c:set var="firstReview" value="${reviewPageInfo.reviews[0]}"/>
+			            <div>${firstReview.avgStarRate}</div>
+			            <div class="review-avg-star2">
+			                <c:choose>
+			                    <c:when test="${firstReview.avgStarRate >= 4.5}">★★★★★</c:when>
+			                    <c:when test="${firstReview.avgStarRate >= 3.5}">★★★★☆</c:when>
+			                    <c:when test="${firstReview.avgStarRate >= 2.5}">★★★☆☆</c:when>
+			                    <c:when test="${firstReview.avgStarRate >= 1.5}">★★☆☆☆</c:when>
+			                    <c:when test="${firstReview.avgStarRate >= 0.1}">★☆☆☆☆</c:when>
+			                    <c:otherwise>☆☆☆☆☆</c:otherwise>
+			                </c:choose>
+			            </div>
+			        </c:otherwise>
+			    </c:choose>
+			</c:if>
            </div>
            <div class="review-percent">
                <ul>
@@ -263,7 +276,7 @@
          </div>                  
          <br><br>
          <div class="review-dividing-line"></div> <!-- 리뷰 시작 구분선 -->      
-            <c:forEach items="${reviews}" var="review" varStatus="vs">
+            <c:forEach items="${reviewPageInfo.reviews}" var="review" varStatus="vs">
                <li>
                   <div class="review-box">
                      <div class="review-info-box">
@@ -278,24 +291,22 @@
                         </em>
                      </div>
                      <!-- 리뷰 펫 -->
-                     <c:set var="pets" value="${reviewPetsMap[review.reviewId]}" />
-                     <c:if test="${not empty pets}">
+                     <c:set var="pet" value="${review}" />
+                     <c:if test="${not empty pet.petName}">
                         <div class="reivew-pet-box">
                            <!-- 펫정보 -->
-                           <c:forEach items="${pets}" var="pet">
-                              <em class="review-pet-name">${pet.petName} &nbsp;
-                              <em class="review-em">|</em></em>
-                              <em class="review-pet-gender">${pet.petGender} &nbsp;
-                              <em class="review-em">|</em></em>
-                              <em class="review-pet-age">${pet.petAge}살 &nbsp;
-                              <em class="review-em">|</em></em>
-                              <em class="review-pet-weight">${pet.petWeight}kg &nbsp;
-                              <em class="review-em">|</em></em>
-                              <em class="review-pet-breed">${pet.petBreed}</em>
-                           </c:forEach>
+                             <em class="review-pet-name">${pet.petName} &nbsp;
+                             <em class="review-em">|</em></em>
+                             <em class="review-pet-gender">${pet.petGender} &nbsp;
+                             <em class="review-em">|</em></em>
+                             <em class="review-pet-age">${pet.petAge}살 &nbsp;
+                             <em class="review-em">|</em></em>
+                             <em class="review-pet-weight">${pet.petWeight}kg &nbsp;
+                             <em class="review-em">|</em></em>
+                             <em class="review-pet-breed">${pet.petBreed}</em>
                         </div>
                      </c:if>
-                     <c:if test="${empty pets}">
+					<c:if test="${empty pet.petName}">
 	                      <em class="review-pet-name">펫 정보가 등록되지 않은 회원입니다.</em>
                      </c:if>
                      <!-- 리뷰 별점 -->
@@ -326,33 +337,29 @@
                            <em class="review-info-content">${review.reviewContent}</em> <!-- 리뷰내용 -->
                            <span class="product-review-small-space"></span>
                           <!-- 리뷰 이미지 -->
-								<div class="gallery_wrap3" style="height: 280px; margin-left:77px; margin-right:70px; margin-bottom: 27px;" >
-									<ul class="gallery3">
-										<c:set var="imageFilenames"
-											value="${reviewImageMap[review.reviewId]}" />
-										<c:if test="${not empty reviewImageMap[review.reviewId]}">
-											<c:forEach var="filename"
-												items="${reviewImageMap[review.reviewId]}" varStatus="loop">
-												<li class="gallery_item1"><img class="indexImg"
-													alt="Review Image"
-													src="${pageContext.request.contextPath}/resources/upload/review/${filename}">
-												</li>
-											</c:forEach>
-										</c:if>
-									</ul>
+							<div class="gallery_wrap3" style="height: 280px; margin-left:77px; margin-right:70px; margin-bottom: 27px;" >
+								<ul class="gallery3">
+									<c:if test="${not empty review.attachments}">
+										<c:forEach var="attachment" items="${review.attachments}">
+											<li class="gallery_item1">
+												<img class="indexImg" alt="Review Image" src="${pageContext.request.contextPath}/resources/upload/review/${attachment.imageRenamedFilename}">
+											</li>
+										</c:forEach>
+									</c:if>
+								</ul>
+							</div>
+							<div class="button_box">
+								<div class="prev_btn">
+									<img style="margin-top:-151px"
+										src="${pageContext.request.contextPath}/resources/images/home/left-arrow.png"
+										alt="이전" />
 								</div>
-								<div class="button_box">
-									<div class="prev_btn">
-										<img style="margin-top:-151px"
-											src="${pageContext.request.contextPath}/resources/images/home/left-arrow.png"
-											alt="이전" />
-									</div>
-									<div class="next_btn">
-										<img style="margin-top:-151px; margin-left:1100px;"
-											src="${pageContext.request.contextPath}/resources/images/home/right-arrow.png"
-											alt="다음" />
-									</div>
+								<div class="next_btn">
+									<img style="margin-top:-151px; margin-left:1100px;"
+										src="${pageContext.request.contextPath}/resources/images/home/right-arrow.png"
+										alt="다음" />
 								</div>
+							</div>
                          </div>
                        </div>
                      </li>
@@ -444,7 +451,7 @@
 	</div>
    <form:form id="addCartFrm">
       <input type="hidden" value="1" id="_quantity" name="quantity">
-      <input type="hidden" value="${productDetails[0].productDetailId}"
+      <input type="hidden" value="${reviewPageInfo.reviews[0].productDetailId}"
          id="_productDetailId" name="productDetailId">
    </form:form>
 

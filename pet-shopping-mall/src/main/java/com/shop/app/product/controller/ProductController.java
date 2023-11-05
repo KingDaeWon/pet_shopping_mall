@@ -49,6 +49,7 @@ import com.shop.app.product.entity.ProductCategory;
 import com.shop.app.product.entity.ProductDetail;
 import com.shop.app.product.entity.ProductImages;
 import com.shop.app.product.service.ProductService;
+import com.shop.app.review.dto.ProductDetailPageDto;
 import com.shop.app.review.dto.ProductReviewAvgDto;
 import com.shop.app.review.entity.Review;
 import com.shop.app.review.entity.ReviewDetails;
@@ -93,21 +94,18 @@ public class ProductController {
 
 		Map<String, Object> params = Map.of("page", page, "limit", limit, "productId", productId);
 
-		
-		int totalCount = reviewService.findProductTotalReviewCount(productId);
+		// 리뷰의 총 개수, 평균 별점, 상품별 리뷰 조회, 이미지 조회, 페이징바 (성능개선)
+	    ProductDetailPageDto reviewPageInfo = reviewService.findProductReviewAllAndCount(params, productId);
+	    model.addAttribute("reviewPageInfo", reviewPageInfo);
 
-		int totalPages = (int) Math.ceil((double) totalCount / limit);
-		model.addAttribute("totalPages", totalPages);
+	    long totalCount = reviewPageInfo.getTotalCount();
+	    int totalPages = (int) Math.ceil((double) totalCount / limit);
+	    model.addAttribute("totalPages", totalPages);
 
-		// 상품Id에 대한 모든 리뷰 가져오기 (이혜령)
-		List<Review> reviews = reviewService.findProductReviewAll(params, productId);
-		model.addAttribute("reviews", reviews);
-
-		// 리뷰 평균 별점에 대한 퍼센트 구하기 (이혜령)
-		List<Review> allReviews = reviewService.findProductReviewAllNoPageBar(productId);
-
+	    List<ProductDetailPageDto> allReviews = reviewPageInfo.getReviews();
+		   
 		int[] starCounts = new int[6];
-		for (Review review : allReviews) {
+		for (ProductDetailPageDto review : allReviews) {
 			int star = review.getReviewStarRate();
 			starCounts[star]++;
 		}
@@ -132,14 +130,15 @@ public class ProductController {
 		model.addAttribute("formattedPercentages", formattedPercentages);
 
 		// 상품 아이디로 상품정보 가져오기
-		Product product = productService.findProductById(productId);
-		List<ProductDetail> productDetails = productService.findAllProductDetailsByProductId(productId);
 		ProductImages productImages = productService.findImageAttachmentsByProductId(productId);
-
+		
 		// 썸네일이미지와 상세이미지 분리
+		
 		List<ImageAttachment> attachments = productImages.getAttachments();
 		List<ImageAttachment> thumbnailImages = new ArrayList<>();
 		List<ImageAttachment> detailImages = new ArrayList<>();
+		
+		// productDetails 리스트의 각 항목에 대해 getAttachments() 호출
 		for (ImageAttachment attach : attachments) {
 			if (attach != null && attach.getImageOriginalFilename() != null) {
 				if (attach.getThumbnail() == Thumbnail.Y) {
@@ -150,53 +149,14 @@ public class ProductController {
 			}
 		}
 
-		model.addAttribute("product", product);
 		model.addAttribute("thumbnailImages", thumbnailImages);
 		model.addAttribute("detailImages", detailImages); 
-		model.addAttribute("productDetails", productDetails); 
-
-		// 상품 상세 페이지 리뷰 - 펫 정보  (이혜령)
-		Map<Integer, List<Pet>> reviewPetsMap = new HashMap<>();
-		for (Review review : reviews) {
-			List<Pet> pets = petService.findReviewPetByMemberId(review.getReviewMemberId());
-			reviewPetsMap.put(review.getReviewId(), pets);
-		}
-
-
-		// 상품 상세 페이지 리뷰 - 이미지 파일 (이혜령)
-		Map<Integer, List<String>> reviewImageMap = new HashMap<>();
-		for (Review review : reviews) {
-			int reviewId2 = review.getReviewId();
-			ReviewDetails reviewDetails = reviewService.findProductImageAttachmentsByReviewId(reviewId2);
-
-			if (reviewDetails.getAttachments() != null && !reviewDetails.getAttachments().isEmpty()) {
-				List<String> imageFilenames = new ArrayList<>();
-
-				for (ImageAttachment attachment : reviewDetails.getAttachments()) {
-					imageFilenames.add(attachment.getImageRenamedFilename());
-				}
-				reviewImageMap.put(reviewId2, imageFilenames);
-			}
-		}
-
-		model.addAttribute("reviewImageMap", reviewImageMap);
-
-		Map<Integer, List<OrderReviewListDto>> reviewProductMap = new HashMap<>();
-		for (Review review : reviews) {
-			List<OrderReviewListDto> ReviewOrders = orderService.findProductByReviewId(review.getReviewId(), productId);
-			reviewProductMap.put(review.getReviewId(), ReviewOrders);
-		}
-
-		model.addAttribute("reviewPetsMap", reviewPetsMap); 
-		model.addAttribute("reviewProductMap", reviewProductMap); 
-		// 상품 상세 페이지 리뷰 - 리뷰 전체개수 확인 (이혜령)
-		int reveiwTotalCount = reviewService.findReviewTotalCount(productId);
-		model.addAttribute("reviewTotalCount", reveiwTotalCount);
-
-		// 리뷰 별점 평균 (이혜령)
-		ProductReviewAvgDto productReviewStarAvg = reviewService.productReviewStarAvg(productId);
-		model.addAttribute("productReviewStarAvg", productReviewStarAvg);
-
+//		model.addAttribute("productDetails", productDetails); 
+		
+		// 상품 상세 페이지 리뷰 - 펫 정보 (예라, 성능개선)
+//		Map<Integer, List<Pet>> reviewPetsMap = petService.findPetsMapByReviews(reviewPageInfo);
+//		model.addAttribute("reviewPetsMap", reviewPetsMap); 
+		
 		if (member != null) {
 			model.addAttribute("likeState", wishlistService.getLikeProduct(productId, member.getMemberId()));
 		}

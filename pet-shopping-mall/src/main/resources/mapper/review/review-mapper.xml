@@ -115,11 +115,79 @@
 	    p.product_id, p.product_name
 	</select>
 	
-<resultMap type="ProductReviewAvgDto" id="productReviewAvgDto">
-    <result column="product_id" property="productId" />
-    <result column="product_name" property="productName" />
-    <result column="AVG" property="reviewStarRate" />
-</resultMap>
+	<select id="findProductReviewAllAndCount" resultMap="ProductDetailPageDto">
+	select
+	    r.*,
+	    ia.*,
+	    p.*,
+	    pe.*,
+	    (select count(*) from review where product_id = p.product_id) as review_count,
+	    (select round(avg(review_star_rate), 1) from review WHERE product_id = p.product_id) as avg_star_rate
+	from
+	    review r
+	left join
+	    image_attachment_mapping iam on r.review_id = iam.ref_id AND iam.ref_table = 'review'
+	left join
+	    image_attachment ia on iam.image_id = ia.image_id
+	left join
+	    product p on p.product_id = r.product_id
+	left join
+    	pet pe on pe.pet_id = r.pet_id
+	where
+	    p.product_id = #{productId}
+	</select>
+	
+	<resultMap type="ProductDetailPageDto" id="ProductDetailPageDto">
+	    <!-- 상품 -->
+	    <result column="product_id" property="productId" />
+	    <result column="product_name" property="productName" />
+        <result property="categoryId" column="category_id"/>
+        <result property="productPrice" column="product_price"/>
+        <result property="imageId" column="image_id"/>
+        <result property="createDate" column="create_date"/>
+        <result property="likeCnt" column="like_cnt"/>
+	    
+	    <!-- 리뷰 -->
+	    <result column="review_id" property="reviewId" />
+	    <result column="review_member_id" property="reviewMemberId" />
+	    <result column="review_star_rate" property="reviewStarRate" />
+	    <result column="review_title" property="reviewTitle" />
+	    <result column="review_content" property="reviewContent" />
+	    <result column="review_created_at" property="reviewCreatedAt" />
+	    <result column="avg_star_rate" property="avgStarRate" />
+	    <result column="total_count" property="totalCount" />
+	    <result column="review_count" property="totalCount" />
+	    
+	    <!-- 펫 -->
+	    <result column="pet_id" property="petId" />
+	    <result column="member_id" property="memberId" />
+	    <result column="pet_name" property="petName" />
+	    <result column="pet_age" property="petAge" />
+	    <result column="pet_breed" property="petBreed" />
+	    <result column="pet_weight" property="petWeight" />
+	    <result column="pet_gender" property="petGender" />
+	    <result column="pet_kind" property="petKind" />
+	    
+	    <!-- 이미지 -->
+	    <collection property="attachments" ofType="com.shop.app.common.entity.ImageAttachment">
+	        <result column="image_id" property="imageId" />
+	        <result column="image_type" property="imageType" />
+	        <result column="image_original_filename" property="imageOriginalFilename" />
+	        <result column="image_renamed_filename" property="imageRenamedFilename" />
+	        <result column="image_file_size" property="imageFileSize" />
+	        <result column="thumbnail" property="thumbnail" />
+	        <result column="image_created_at" property="imageCreatedAt" />
+	    </collection>
+	</resultMap>
+	
+	
+	<resultMap type="ProductReviewAvgDto" id="productReviewAvgDto">
+	    <result column="product_id" property="productId" />
+	    <result column="product_name" property="productName" />
+	    <result column="avg" property="reviewStarRate" />
+	</resultMap>
+
+
 	
 	<select id="findReviewAll" resultType="ReviewListDto">
     SELECT 
