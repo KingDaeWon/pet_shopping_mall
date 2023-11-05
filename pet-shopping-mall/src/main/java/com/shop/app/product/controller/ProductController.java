@@ -151,11 +151,6 @@ public class ProductController {
 
 		model.addAttribute("thumbnailImages", thumbnailImages);
 		model.addAttribute("detailImages", detailImages); 
-//		model.addAttribute("productDetails", productDetails); 
-		
-		// 상품 상세 페이지 리뷰 - 펫 정보 (예라, 성능개선)
-//		Map<Integer, List<Pet>> reviewPetsMap = petService.findPetsMapByReviews(reviewPageInfo);
-//		model.addAttribute("reviewPetsMap", reviewPetsMap); 
 		
 		if (member != null) {
 			model.addAttribute("likeState", wishlistService.getLikeProduct(productId, member.getMemberId()));
